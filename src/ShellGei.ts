@@ -5,18 +5,19 @@ import sanitizeHtml from 'sanitize-html';
 
 import {PendingToot, Toot} from "~/Mastodon";
 
+import he from 'he';
 
 export default class ShellGei {
     script: string;
 
     public constructor(public toot: Toot) {
-        this.script = sanitizeHtml(
+        this.script = he.decode(sanitizeHtml(
             toot.content.replace(/<br[ \/]*?>/g, "\n"),
             {
                 allowedTags: [],
                 allowedAttributes: {}
             }
-        );
+        ));
     }
 
     public async execute(dockerImage: string, timeout: number): Promise<PendingToot> {
