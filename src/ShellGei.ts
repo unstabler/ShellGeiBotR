@@ -26,10 +26,14 @@ export default class ShellGei {
             .update(this.toot.id, "utf8").digest('hex');
 
         const path = `/tmp/SHELLGEI_${name}.sh`;
-        writeFileSync(path, this.script);
+        writeFileSync(path, this.script, {
+            mode: 0o755
+        });
+
+        const command = this.hasShebangLine ? path : `bash ${path}`;
 
         const stdout: string = await new Promise((resolve, reject) => {
-            exec(`docker run --net=none --rm --name "${name}" -v ${path}:${path} ${dockerImage} bash ${path}`, {
+            exec(`docker run --net=none --rm --name "${name}" -v ${path}:${path} ${dockerImage} ${command}`, {
                 timeout: timeout * 1000,
                 killSignal: "SIGKILL"
             }, (error, stdout, stderr) => {
@@ -46,5 +50,9 @@ export default class ShellGei {
             visibility: "unlisted",
             status: `@${this.toot.account.acct}\n${stdout}\n${this.toot.url}`
         };
+    }
+
+    get hasShebangLine(): boolean {
+        return this.script.startsWith('#!');
     }
 }
